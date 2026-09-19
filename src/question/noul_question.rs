@@ -115,7 +115,9 @@ where
 	match opt {
 		Some(Value::Object(map)) => Ok(map.into_iter().map(|(k, v)| (QKey::from(k), v)).collect()),
 		Some(Value::Null) | None => Ok(Vec::new()),
-		Some(other) => Err(serde::de::Error::custom(format!("expected criteria object, got {other:?}"))),
+		Some(other) => Err(serde::de::Error::custom(format!(
+			"expected criteria object, got {other:?}"
+		))),
 	}
 }
 
@@ -156,8 +158,14 @@ mod tests {
 		assert_eq!(val["instructions"], "Does message ask for credentials?");
 		assert_eq!(val["criteria"]["true"], "Asks for password or PIN");
 		assert_eq!(val["criteria"]["false"], "No sensitive credential requested");
-		assert_eq!(question.true_criteria().map(|v| v.as_str()), Some(Some("Asks for password or PIN")));
-		assert_eq!(question.false_criteria().map(|v| v.as_str()), Some(Some("No sensitive credential requested")));
+		assert_eq!(
+			question.true_criteria().map(|v| v.as_str()),
+			Some(Some("Asks for password or PIN"))
+		);
+		assert_eq!(
+			question.false_criteria().map(|v| v.as_str()),
+			Some(Some("No sensitive credential requested"))
+		);
 
 		Ok(())
 	}
@@ -178,8 +186,14 @@ mod tests {
 
 		// -- Check
 		assert_eq!(question.instructions(), "Is this an anomaly?");
-		assert_eq!(question.true_criteria().map(|v| v.as_str()), Some(Some("Anomalous reading")));
-		assert_eq!(question.false_criteria().map(|v| v.as_str()), Some(Some("Normal reading")));
+		assert_eq!(
+			question.true_criteria().map(|v| v.as_str()),
+			Some(Some("Anomalous reading"))
+		);
+		assert_eq!(
+			question.false_criteria().map(|v| v.as_str()),
+			Some(Some("Normal reading"))
+		);
 
 		Ok(())
 	}
