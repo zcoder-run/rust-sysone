@@ -1,5 +1,6 @@
 use serde_json::json;
 use sysone::{Client, Request};
+use value_ext::JsonValueExt;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -18,7 +19,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	let res = client.exec(req).await?;
 
-	println!("{res:#?}");
+	println!("{}", res.x_pretty()?);
 
 	Ok(())
 }
