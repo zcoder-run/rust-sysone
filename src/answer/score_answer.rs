@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// The `score` answer kind, holding the score, a confidence, the option probabilities, and the legend.
 #[derive(Debug, Clone, Serialize, Deserialize)]

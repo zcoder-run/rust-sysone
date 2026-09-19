@@ -1,9 +1,8 @@
 //! Typed response returned by the client.
 
-use serde_json::Value;
-
 use crate::pricer::cost;
 use crate::{Answer, QKey, Result};
+use serde_json::Value;
 
 // region:    --- Types
 
@@ -38,11 +37,7 @@ impl Response {
 	/// the top-level `input_tokens` and `output_tokens` when absent. The `cost` is computed
 	/// client-side from the input tokens.
 	pub fn from_value(value: Value) -> Result<Self> {
-		let model = value
-			.get("model")
-			.and_then(Value::as_str)
-			.unwrap_or_default()
-			.to_string();
+		let model = value.get("model").and_then(Value::as_str).unwrap_or_default().to_string();
 
 		let answers = parse_answers(value.get("answers"))?;
 
@@ -107,9 +102,7 @@ fn parse_q_key(key: &str) -> QKey {
 
 /// Read a `u64` field from an optional object.
 fn parse_u64(parent: Option<&Value>, key: &str) -> Option<u64> {
-	parent
-		.and_then(|value| value.get(key))
-		.and_then(Value::as_u64)
+	parent.and_then(|value| value.get(key)).and_then(Value::as_u64)
 }
 
 // endregion: --- Support
@@ -119,9 +112,8 @@ fn parse_u64(parent: Option<&Value>, key: &str) -> Option<u64> {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use serde_json::json;
-
 	use crate::pricer::PRICE_PER_MILLION_TOKENS;
+	use serde_json::json;
 
 	#[test]
 	fn test_response_from_value_parses_full_response() -> Result<()> {

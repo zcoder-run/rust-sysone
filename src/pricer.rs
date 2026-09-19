@@ -27,8 +27,7 @@ pub fn price_per_million_tokens(model: &str) -> Option<f64> {
 ///
 /// Returns `None` when the model has no known price.
 pub fn cost(model: &str, input_tokens: u64) -> Option<f64> {
-	price_per_million_tokens(model)
-		.map(|price| price * input_tokens as f64 / 1_000_000.0)
+	price_per_million_tokens(model).map(|price| price * input_tokens as f64 / 1_000_000.0)
 }
 
 // endregion: --- Support

@@ -90,7 +90,9 @@ where
 	match opt {
 		Some(Value::Object(map)) => Ok(map.into_iter().map(|(k, v)| (QKey::from(k), v)).collect()),
 		Some(Value::Null) | None => Ok(Vec::new()),
-		Some(other) => Err(serde::de::Error::custom(format!("expected criteria object, got {other:?}"))),
+		Some(other) => Err(serde::de::Error::custom(format!(
+			"expected criteria object, got {other:?}"
+		))),
 	}
 }
 

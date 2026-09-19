@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// The `choice` answer kind, holding the selected choice, a confidence, and the option probabilities.
 #[derive(Debug, Clone, Serialize, Deserialize)]

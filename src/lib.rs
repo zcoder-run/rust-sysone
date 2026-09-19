@@ -5,8 +5,8 @@ mod client;
 mod client_builder;
 mod error;
 pub mod pricer;
-pub mod question;
 mod qkey;
+pub mod question;
 mod request;
 mod response;
 

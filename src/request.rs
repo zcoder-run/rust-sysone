@@ -1,9 +1,8 @@
+use crate::QKey;
+use crate::question::Question;
 use serde::ser::SerializeMap;
 use serde::{Serialize, Serializer};
 use serde_json::Value;
-
-use crate::question::Question;
-use crate::QKey;
 
 // region:    --- Types
 
@@ -148,7 +147,10 @@ mod tests {
 
 		// -- Check
 		assert_eq!(val["state"], "state");
-		let questions = val.get("questions").and_then(Value::as_object).ok_or("expected questions object")?;
+		let questions = val
+			.get("questions")
+			.and_then(Value::as_object)
+			.ok_or("expected questions object")?;
 		assert!(questions.contains_key("intent"));
 		assert!(questions.contains_key("q0"));
 		assert!(questions.contains_key("q1"));
@@ -194,10 +196,10 @@ mod tests {
 		let noul_q = crate::NoulQuestion::new("Is urgent?").with_true("Urgent action required");
 		let score_q = crate::ScoreQuestion::new("Severity").append_level("Low").append_level("High");
 
-		let req = Request::from_state_questions("test_state", [
-			("choice", Question::from(choice_q)),
-			("noul", Question::from(noul_q)),
-		]);
+		let req = Request::from_state_questions(
+			"test_state",
+			[("choice", Question::from(choice_q)), ("noul", Question::from(noul_q))],
+		);
 
 		assert_eq!(req.questions().len(), 2);
 		assert!(matches!(req.question("choice"), Some(Question::Choice(_))));

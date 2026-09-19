@@ -38,9 +38,7 @@ impl ClientBuilder {
 		let endpoint = self
 			.endpoint
 			.unwrap_or_else(|| "https://api.typesafe.ai/v1/systemone".to_string());
-		let model = self
-			.model
-			.unwrap_or_else(|| "jev-latest".to_string());
+		let model = self.model.unwrap_or_else(|| "jev-latest".to_string());
 
 		if endpoint.trim().is_empty() || reqwest::Url::parse(&endpoint).is_err() {
 			return Err(Error::InvalidEndpoint(endpoint));

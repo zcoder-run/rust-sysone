@@ -112,14 +112,12 @@ where
 {
 	let opt: Option<Value> = Option::deserialize(deserializer)?;
 	match opt {
-		Some(Value::Array(arr)) => {
-			Ok(arr.into_iter().enumerate().map(|(i, v)| (QKey::Idx(i), v)).collect())
-		}
-		Some(Value::Object(map)) => {
-			Ok(map.into_iter().map(|(k, v)| (QKey::from(k), v)).collect())
-		}
+		Some(Value::Array(arr)) => Ok(arr.into_iter().enumerate().map(|(i, v)| (QKey::Idx(i), v)).collect()),
+		Some(Value::Object(map)) => Ok(map.into_iter().map(|(k, v)| (QKey::from(k), v)).collect()),
 		Some(Value::Null) | None => Ok(Vec::new()),
-		Some(other) => Err(serde::de::Error::custom(format!("expected criteria array or object, got {other:?}"))),
+		Some(other) => Err(serde::de::Error::custom(format!(
+			"expected criteria array or object, got {other:?}"
+		))),
 	}
 }
 
