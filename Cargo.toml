@@ -1,0 +1,37 @@
+[package]
+name = "sysone"
+version = "0.0.1"
+edition = "2024"
+description = "System One TypeSafe AI Rust Client (unofficial)"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+categories = ["api-bindings"]
+keywords = ["typesafe-ai", "jev", "system-one", "coding-ai"]
+authors = ["Jeremy Chone (BriteSnow, Inc)"]
+homepage = "https://github.com/zcoder-run/rust-sysone"
+repository = "https://github.com/zcoder-run/rust-sysone"
+
+[lib]
+doctest = false
+
+[lints.rust]
+unsafe_code = "forbid"
+# unused = { level = "allow", priority = -1 } # For exploratory dev.
+
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false
+
+[dependencies]
+# -- Async
+tokio = { version = "1", features = ["full"] }
+# -- Networking
+reqwest = { version = "0.12", features = ["json"] }
+# -- Serde & Content Formats
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_with = { version = "3", features = ["macros"] }
+# -- Others
+derive_more = { version = "2", features = ["from", "display"] }
