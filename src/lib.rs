@@ -5,6 +5,7 @@ mod client;
 mod client_builder;
 mod error;
 pub mod pricer;
+pub mod question;
 mod qkey;
 mod request;
 mod response;
@@ -15,6 +16,7 @@ pub use client_builder::*;
 pub use error::{Error, Result};
 pub use pricer::{PRICE_PER_MILLION_TOKENS, cost, price_per_million_tokens};
 pub use qkey::QKey;
+pub use question::{ChoiceQuestion, NoulQuestion, Question, ScoreQuestion};
 pub use request::*;
 pub use response::Response;
 

@@ -1,5 +1,4 @@
-use serde_json::json;
-use sysone::{Client, Request};
+use sysone::{Client, Question, Request};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -8,13 +7,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let state = "Hi, I've been trying to connect my Stripe account for
 		3 days and it keeps failing. I'm losing sales. Please help ASAP.";
 
-	let req = Request::from_state(state).append_question(
-		"q123",
-		json!({
-				"type": "noul",
-				"instructions": "Does this message express urgency?"
-		}),
-	);
+	let req = Request::from_state(state).append_question("q123", Question::noul("Does this message express urgency?"));
 
 	let res = client.exec(req).await?;
 

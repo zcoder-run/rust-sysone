@@ -85,13 +85,10 @@ impl Default for Client {
 impl Client {
 	async fn exec_with_model(&self, model: impl Into<String>, request: Request) -> Result<Response> {
 		let api_key = self.resolve_api_key()?;
-		let Request { state, questions } = request;
-
-		let payload = serde_json::json!({
-			"state": state,
-			"model": model.into(),
-			"questions": questions,
-		});
+		let mut payload = serde_json::to_value(request)?;
+		if let Value::Object(map) = &mut payload {
+			map.insert("model".to_string(), Value::String(model.into()));
+		}
 
 		let res = self
 			.reqwest_client

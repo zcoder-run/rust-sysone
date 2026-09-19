@@ -12,7 +12,7 @@ Part of the [zcoder.run](https://zcoder.run) Rust libraries, and will probably b
 
 ```rust
 use serde_json::json;
-use sysone::{Client, Request};
+use sysone::{Client, Question, Request};
 
 // Set TYPESAFE_API_KEY in the environment or configure it on the builder:
 // Client::builder().with_api_key("...").build()?;
@@ -22,8 +22,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = Client::default();
 
     let req = Request::from_state(json!({ "code": "fn main() {}" }))
-        .append_question("intent", json!({ "type": "noul", "instructions": "What does this code do?" }))
-        .append_question(0, json!({ "type": "choice", "choices": ["ok", "fix"] }));
+        .append_question("intent", Question::noul("What does this code do?"))
+        .append_question(0, Question::choice("Classify code status")
+            .append_criteria("ok", "Working code")
+            .append_criteria("fix", "Needs fixes"));
 
     let res = client.exec(req).await?;
 
@@ -43,7 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ### Request
 
-`Request` follows the fluid API style, every value is an `impl Into<serde_json::Value>`, and every question is keyed with `impl Into<QKey>`. Questions are stored as a JSON object of question key to question body, where a question with an existing key overrides the previous one.
+`Request` follows the fluid API style, state accepts `impl Into<serde_json::Value>`, and questions accept `impl Into<Question>` keyed by `impl Into<QKey>`.
 
 Constructors:
 
@@ -52,19 +54,36 @@ Constructors:
 
 ```rust
 use serde_json::json;
-use sysone::Request;
+use sysone::{ChoiceQuestion, NoulQuestion, Question, Request, ScoreQuestion};
 
-// Replace the full question set (a dictionary of question key to question body)
+// Replace the full question set with key-question pairs
 let req = Request::from_state("current state")
-    .with_questions(json!({ "intent": "What does this code do?" }));
+    .with_questions([
+        ("intent", Question::noul("What does this code do?")),
+    ]);
 
 // Or build it up one question at a time using named or indexed keys
 let req = Request::default()
     .with_state(json!({ "step": 1 }))
-    .append_question("intent", json!({ "type": "noul" }))
-    .append_question(0, json!({ "type": "choice" }))
-    .extend_questions([(1, json!({ "type": "score" })), ("summary", json!({ "type": "noul" }))]);
+    .append_question("intent", Question::noul("Does it compile?"))
+    .append_question(0, ChoiceQuestion::new("Pick department")
+        .append_criteria("billing", "Billing questions")
+        .append_criteria("support", "Technical questions"))
+    .extend_questions([
+        (1, ScoreQuestion::new("Rate severity").append_level("Low").append_level("High").into()),
+        ("summary", Question::noul("Does it need review?")),
+    ]);
 ```
+
+### Typed Questions
+
+The `Question` enum and dedicated primitive structs provide typed construction and criteria builders:
+
+- `Question::noul(...)` / `NoulQuestion`: binary condition verification with optional `.with_true(...)`, `.with_false(...)`, or `.with_true_false(...)`.
+- `Question::choice(...)` / `ChoiceQuestion`: option selection with `.append_criteria(key, criterion)` or `.extend_criteria(...)`.
+- `Question::score(...)` / `ScoreQuestion`: ordinal levels with `.append_level(criterion)`, `.extend_levels(...)`, or criteria map.
+
+Raw `serde_json::Value` questions are also accepted via `From<Value> for Question`.
 
 ### Question Keys (QKey)
 
