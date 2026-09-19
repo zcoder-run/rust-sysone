@@ -1,4 +1,4 @@
-use crate::{Client, Result};
+use crate::{Client, Error, Result};
 
 #[derive(Default)]
 pub struct ClientBuilder {
@@ -41,6 +41,10 @@ impl ClientBuilder {
 		let model = self
 			.model
 			.unwrap_or_else(|| "jev-latest".to_string());
+
+		if endpoint.trim().is_empty() || reqwest::Url::parse(&endpoint).is_err() {
+			return Err(Error::InvalidEndpoint(endpoint));
+		}
 
 		Ok(Client {
 			reqwest_client,

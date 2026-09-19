@@ -1,4 +1,4 @@
-use crate::{ClientBuilder, Result};
+use crate::{ClientBuilder, Error, Result};
 use serde::Serialize;
 use serde_json::Value;
 
@@ -34,15 +34,34 @@ impl Client {
 	pub fn model(&self) -> &str {
 		&self.model
 	}
+
+	pub fn api_key(&self) -> Option<&str> {
+		self.api_key.as_deref()
+	}
+}
+
+/// Auth / Resolution
+impl Client {
+	fn resolve_api_key(&self) -> Result<String> {
+		if let Some(key) = &self.api_key
+			&& !key.is_empty()
+		{
+			return Ok(key.clone());
+		}
+
+		if let Ok(key) = std::env::var("TYPESAFE_API_KEY")
+			&& !key.is_empty()
+		{
+			return Ok(key);
+		}
+
+		Err(Error::AuthNotPresent)
+	}
 }
 
 /// Execution
 impl Client {
-	pub async fn exec(
-		&self,
-		state: impl Serialize,
-		questions: impl Serialize,
-	) -> Result<Value> {
+	pub async fn exec(&self, state: impl Serialize, questions: impl Serialize) -> Result<Value> {
 		self.exec_with_model(&self.model, state, questions).await
 	}
 
@@ -52,10 +71,7 @@ impl Client {
 		state: impl Serialize,
 		questions: impl Serialize,
 	) -> Result<Value> {
-		let api_key = match &self.api_key {
-			Some(key) => key.clone(),
-			None => std::env::var("TYPESAFE_API_KEY")?,
-		};
+		let api_key = self.resolve_api_key()?;
 
 		let payload = serde_json::json!({
 			"state": state,
@@ -70,8 +86,13 @@ impl Client {
 			.bearer_auth(api_key)
 			.json(&payload)
 			.send()
-			.await?
-			.error_for_status()?;
+			.await?;
+
+		let status = res.status();
+		if !status.is_success() {
+			let body = res.text().await.unwrap_or_default();
+			return Err(Error::ResponseError { status, body });
+		}
 
 		let body = res.json::<Value>().await?;
 

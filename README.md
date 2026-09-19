@@ -4,7 +4,7 @@ By the same author of the [genai](https://crates.io/crates/genai) crate (Jeremy 
 
 - Very early release `0.0.x`
 - Extremely basic functionality / API surface for now
-- Feel free to cherry pick what you need for now. 
+- Feel free to cherry pick what you need for now.
 
 Part of the [zcoder.run](https://zcoder.run) Rust libraries, and will probably be used in the zcoder harness (still in the building).
 
@@ -12,6 +12,9 @@ Part of the [zcoder.run](https://zcoder.run) Rust libraries, and will probably b
 
 ```rust
 use sysone::Client;
+
+// Set TYPESAFE_API_KEY in the environment or configure it on the builder:
+// Client::builder().with_api_key("...").build()?;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -23,7 +26,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 ## License
-
 
 Licensed under either of:
 

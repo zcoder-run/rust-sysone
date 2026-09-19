@@ -8,6 +8,13 @@ pub enum Error {
 	#[from(String, &String, &str)]
 	Custom(String),
 
+	AuthNotPresent,
+	InvalidEndpoint(String),
+	ResponseError {
+		status: reqwest::StatusCode,
+		body: String,
+	},
+
 	// -- Externals
 	#[from]
 	Reqwest(reqwest::Error),
