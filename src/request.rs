@@ -1,3 +1,4 @@
+use crate::QKey;
 use serde::Serialize;
 use serde_json::Value;
 
@@ -66,27 +67,27 @@ impl Request {
 		self
 	}
 
-	/// Add (or replace) one question, keyed by `key`.
+	/// Add (or replace) one question, keyed by `key` (name or integer index).
 	///
 	/// Note: The questions are always kept as a dictionary (JSON object), so an existing
 	///       question with the same `key` gets overridden, and a non dictionary questions
 	///       value (set via `with_questions`) gets replaced by a new empty dictionary.
-	pub fn append_question(mut self, key: impl Into<String>, body: impl Into<Value>) -> Self {
+	pub fn append_question(mut self, key: impl Into<QKey>, body: impl Into<Value>) -> Self {
 		let mut questions = match self.questions.take() {
 			Value::Object(questions) => questions,
 			_ => serde_json::Map::new(),
 		};
 
-		questions.insert(key.into(), body.into());
+		questions.insert(key.into().wire(), body.into());
 		self.questions = Value::Object(questions);
 
 		self
 	}
 
-	/// Add (or replace) multiple questions, each one keyed by its own key.
+	/// Add (or replace) multiple questions, each one keyed by its own key (name or integer index).
 	pub fn extend_questions<K, V>(mut self, questions: impl IntoIterator<Item = (K, V)>) -> Self
 	where
-		K: Into<String>,
+		K: Into<QKey>,
 		V: Into<Value>,
 	{
 		for (key, body) in questions {
@@ -95,3 +96,39 @@ impl Request {
 		self
 	}
 }
+
+// region:    --- Tests
+
+#[cfg(test)]
+mod tests {
+	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
+
+	use super::*;
+	use serde_json::json;
+
+	#[test]
+	fn test_request_append_question_named_and_indexed() -> Result<()> {
+		// -- Setup & Fixtures
+		let req = Request::from_state("state")
+			.append_question("intent", json!({ "type": "noul" }))
+			.append_question(0, json!({ "type": "choice" }))
+			.extend_questions([
+				(QKey::from(1), json!({ "type": "score" })),
+				(QKey::from("summary"), json!({ "type": "noul" })),
+			]);
+
+		// -- Exec
+		let questions = req.questions();
+
+		// -- Check
+		let obj = questions.as_object().ok_or("expected questions object")?;
+		assert!(obj.contains_key("intent"));
+		assert!(obj.contains_key("q0"));
+		assert!(obj.contains_key("q1"));
+		assert!(obj.contains_key("summary"));
+
+		Ok(())
+	}
+}
+
+// endregion: --- Tests

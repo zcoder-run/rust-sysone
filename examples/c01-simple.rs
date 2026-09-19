@@ -1,6 +1,5 @@
 use serde_json::json;
 use sysone::{Client, Request};
-use value_ext::JsonValueExt;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -19,7 +18,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	let res = client.exec(req).await?;
 
-	println!("{}", res.x_pretty()?);
+	println!("Model: {}", res.model);
+	println!("Input tokens: {}", res.input_tokens);
+	println!("Output tokens: {}", res.output_tokens);
+
+	if let Some(cost) = res.cost {
+		println!("Cost: ${cost:.6}");
+	}
+
+	println!("Answers: {:?}", res.answers);
 
 	Ok(())
 }

@@ -1,4 +1,4 @@
-use crate::{ClientBuilder, Error, Request, Result};
+use crate::{ClientBuilder, Error, Request, Response, Result};
 use serde_json::Value;
 
 // region:    --- Types
@@ -60,11 +60,30 @@ impl Client {
 
 /// Execution
 impl Client {
-	pub async fn exec(&self, request: Request) -> Result<Value> {
+	pub async fn exec(&self, request: Request) -> Result<Response> {
 		self.exec_with_model(&self.model, request).await
 	}
+}
 
-	pub async fn exec_with_model(&self, model: impl Into<String>, request: Request) -> Result<Value> {
+// region:    --- Default
+
+impl Default for Client {
+	fn default() -> Self {
+		Self {
+			reqwest_client: reqwest::Client::new(),
+			endpoint: "https://api.typesafe.ai/v1/systemone".to_string(),
+			model: "jev-latest".to_string(),
+			api_key: None,
+		}
+	}
+}
+
+// endregion: --- Default
+
+// region:    --- Support
+
+impl Client {
+	async fn exec_with_model(&self, model: impl Into<String>, request: Request) -> Result<Response> {
 		let api_key = self.resolve_api_key()?;
 		let Request { state, questions } = request;
 
@@ -90,22 +109,10 @@ impl Client {
 		}
 
 		let body = res.json::<Value>().await?;
+		let response = Response::from_value(body)?;
 
-		Ok(body)
+		Ok(response)
 	}
 }
 
-// region:    --- Default
-
-impl Default for Client {
-	fn default() -> Self {
-		Self {
-			reqwest_client: reqwest::Client::new(),
-			endpoint: "https://api.typesafe.ai/v1/systemone".to_string(),
-			model: "jev-latest".to_string(),
-			api_key: None,
-		}
-	}
-}
-
-// endregion: --- Default
+// endregion: --- Support
