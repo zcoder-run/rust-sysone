@@ -1,5 +1,4 @@
-use crate::{ClientBuilder, Error, Result};
-use serde::Serialize;
+use crate::{ClientBuilder, Error, Request, Result};
 use serde_json::Value;
 
 // region:    --- Types
@@ -61,17 +60,13 @@ impl Client {
 
 /// Execution
 impl Client {
-	pub async fn exec(&self, state: impl Serialize, questions: impl Serialize) -> Result<Value> {
-		self.exec_with_model(&self.model, state, questions).await
+	pub async fn exec(&self, request: Request) -> Result<Value> {
+		self.exec_with_model(&self.model, request).await
 	}
 
-	pub async fn exec_with_model(
-		&self,
-		model: impl Into<String>,
-		state: impl Serialize,
-		questions: impl Serialize,
-	) -> Result<Value> {
+	pub async fn exec_with_model(&self, model: impl Into<String>, request: Request) -> Result<Value> {
 		let api_key = self.resolve_api_key()?;
+		let Request { state, questions } = request;
 
 		let payload = serde_json::json!({
 			"state": state,

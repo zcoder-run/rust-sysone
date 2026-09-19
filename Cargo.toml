@@ -10,6 +10,7 @@ keywords = ["typesafe-ai", "jev", "system-one", "coding-ai"]
 authors = ["Jeremy Chone (BriteSnow, Inc)"]
 homepage = "https://github.com/zcoder-run/rust-sysone"
 repository = "https://github.com/zcoder-run/rust-sysone"
+exclude = [".workbench"]
 
 [lib]
 doctest = false
@@ -25,13 +26,15 @@ debug = "line-tables-only"
 debug = false
 
 [dependencies]
-# -- Async
-tokio = { version = "1", features = ["full"] }
 # -- Networking
 reqwest = { version = "0.12", features = ["json"] }
 # -- Serde & Content Formats
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-serde_with = { version = "3", features = ["macros"] }
 # -- Others
 derive_more = { version = "2", features = ["from", "display"] }
+value-ext = "0.1.5"
+
+[dev-dependencies]
+# -- Async
+tokio = { version = "1", features = ["full"] }
