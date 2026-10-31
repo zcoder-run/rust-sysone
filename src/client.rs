@@ -1,14 +1,17 @@
-use crate::{ClientBuilder, Error, Request, Response, Result};
-use serde_json::Value;
+use crate::adapter::AdapterCtx;
+use crate::{AdapterKind, ClientBuilder, Error, Request, Response, Result};
+use crate::webc::Webc;
 
 // region:    --- Types
 
 #[derive(Debug, Clone)]
 pub struct Client {
-	pub(crate) reqwest_client: reqwest::Client,
+	pub(crate) webc: Webc,
 	pub(crate) endpoint: String,
 	pub(crate) model: String,
 	pub(crate) api_key: Option<String>,
+	pub(crate) adapter_kind: AdapterKind,
+	pub(crate) extra_headers: Vec<(String, String)>,
 }
 
 // endregion: --- Types
@@ -37,6 +40,14 @@ impl Client {
 	pub fn api_key(&self) -> Option<&str> {
 		self.api_key.as_deref()
 	}
+
+	pub fn adapter_kind(&self) -> AdapterKind {
+		self.adapter_kind
+	}
+
+	pub fn extra_headers(&self) -> &[(String, String)] {
+		&self.extra_headers
+	}
 }
 
 /// Auth / Resolution
@@ -48,7 +59,7 @@ impl Client {
 			return Ok(key.clone());
 		}
 
-		if let Ok(key) = std::env::var("TYPESAFE_API_KEY")
+		if let Ok(key) = std::env::var(self.adapter_kind.api_key_env_var())
 			&& !key.is_empty()
 		{
 			return Ok(key);
@@ -61,7 +72,9 @@ impl Client {
 /// Execution
 impl Client {
 	pub async fn exec(&self, request: Request) -> Result<Response> {
-		self.exec_with_model(&self.model, request).await
+		let api_key = self.resolve_api_key()?;
+		let ctx = self.adapter_ctx(&api_key);
+		crate::adapter::exec(self.adapter_kind, ctx, &request).await
 	}
 }
 
@@ -69,11 +82,14 @@ impl Client {
 
 impl Default for Client {
 	fn default() -> Self {
+		let adapter_kind = AdapterKind::default();
 		Self {
-			reqwest_client: reqwest::Client::new(),
-			endpoint: "https://api.typesafe.ai/v1/systemone".to_string(),
-			model: "jev-latest".to_string(),
+			webc: Webc::default(),
+			endpoint: adapter_kind.default_endpoint().to_string(),
+			model: adapter_kind.default_model().to_string(),
 			api_key: None,
+			adapter_kind,
+			extra_headers: Vec::new(),
 		}
 	}
 }
@@ -83,32 +99,14 @@ impl Default for Client {
 // region:    --- Support
 
 impl Client {
-	async fn exec_with_model(&self, model: impl Into<String>, request: Request) -> Result<Response> {
-		let api_key = self.resolve_api_key()?;
-		let mut payload = serde_json::to_value(request)?;
-		if let Value::Object(map) = &mut payload {
-			map.insert("model".to_string(), Value::String(model.into()));
+	fn adapter_ctx<'a>(&'a self, api_key: &'a str) -> AdapterCtx<'a> {
+		AdapterCtx {
+			webc: &self.webc,
+			endpoint: &self.endpoint,
+			model: &self.model,
+			api_key,
+			extra_headers: &self.extra_headers,
 		}
-
-		let res = self
-			.reqwest_client
-			.post(&self.endpoint)
-			.header(reqwest::header::CONTENT_TYPE, "application/json")
-			.bearer_auth(api_key)
-			.json(&payload)
-			.send()
-			.await?;
-
-		let status = res.status();
-		if !status.is_success() {
-			let body = res.text().await.unwrap_or_default();
-			return Err(Error::ResponseError { status, body });
-		}
-
-		let body = res.json::<Value>().await?;
-		let response = Response::from_value(body)?;
-
-		Ok(response)
 	}
 }
 

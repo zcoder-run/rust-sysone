@@ -10,6 +10,7 @@ pub enum Error {
 
 	AuthNotPresent,
 	InvalidEndpoint(String),
+	UnknownAdapterKind(String),
 	ResponseError {
 		status: reqwest::StatusCode,
 		body: String,

@@ -1,5 +1,6 @@
 // region:    --- Modules
 
+mod adapter;
 mod answer;
 mod client;
 mod client_builder;
@@ -9,7 +10,9 @@ mod qkey;
 pub mod question;
 mod request;
 mod response;
+mod webc;
 
+pub use adapter::AdapterKind;
 pub use answer::{Answer, ChoiceAnswer, NoulAnswer, ScoreAnswer};
 pub use client::*;
 pub use client_builder::*;
