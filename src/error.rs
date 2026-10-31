@@ -18,6 +18,8 @@ pub enum Error {
 
 	// -- Externals
 	#[from]
+	JsonValueExt(value_ext::JsonValueExtError),
+	#[from]
 	Reqwest(reqwest::Error),
 	#[from]
 	SerdeJson(serde_json::Error),

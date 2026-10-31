@@ -1,13 +1,12 @@
 use crate::adapter::support::parse_q_key;
 use crate::{Answer, QKey, Request, Response, Result};
 use serde_json::Value;
+use value_ext::JsonValueExt;
 
 /// Build the jev wire payload by serializing the request and inserting the `model`.
 pub(crate) fn build_payload(model: &str, request: &Request) -> Result<Value> {
 	let mut payload = serde_json::to_value(request)?;
-	if let Value::Object(map) = &mut payload {
-		map.insert("model".to_string(), Value::String(model.to_string()));
-	}
+	payload.x_insert("model", model)?;
 
 	Ok(payload)
 }
@@ -19,17 +18,12 @@ pub(crate) fn build_payload(model: &str, request: &Request) -> Result<Value> {
 /// token usage is read from `usage.input_tokens` and `usage.output_tokens`, falling back to
 /// the top-level `input_tokens` and `output_tokens` when absent.
 pub(crate) fn parse_response(value: Value) -> Result<Response> {
-	let model = value.get("model").and_then(Value::as_str).unwrap_or_default().to_string();
+	let model = value.x_get_str("model").unwrap_or_default().to_string();
 
-	let answers = parse_answers(value.get("answers"))?;
+	let answers = parse_answers(&value)?;
 
-	let input_tokens = parse_u64(value.get("usage"), "input_tokens")
-		.or_else(|| value.get("input_tokens").and_then(Value::as_u64))
-		.unwrap_or(0);
-
-	let output_tokens = parse_u64(value.get("usage"), "output_tokens")
-		.or_else(|| value.get("output_tokens").and_then(Value::as_u64))
-		.unwrap_or(0);
+	let input_tokens = parse_tokens(&value, "input_tokens");
+	let output_tokens = parse_tokens(&value, "output_tokens");
 
 	Ok(Response {
 		model,
@@ -46,23 +40,28 @@ pub(crate) fn parse_response(value: Value) -> Result<Response> {
 ///
 /// A missing or non-object `answers` yields an empty list. Each key is mapped back into a `QKey`
 /// (see `parse_q_key`), and each value is deserialized into an `Answer`.
-fn parse_answers(answers: Option<&Value>) -> Result<Vec<(QKey, Answer)>> {
-	let mut parsed = Vec::new();
+fn parse_answers(value: &Value) -> Result<Vec<(QKey, Answer)>> {
+	let Ok(answers) = value.x_get_object("answers") else {
+		return Ok(Vec::new());
+	};
 
-	if let Some(Value::Object(answers)) = answers {
-		for (key, value) in answers {
-			let q_key = parse_q_key(key);
-			let answer: Answer = serde_json::from_value(value.clone())?;
-			parsed.push((q_key, answer));
-		}
+	let mut parsed = Vec::with_capacity(answers.len());
+
+	for (key, value) in answers {
+		let q_key = parse_q_key(key);
+		let answer: Answer = serde_json::from_value(value.clone())?;
+		parsed.push((q_key, answer));
 	}
 
 	Ok(parsed)
 }
 
-/// Read a `u64` field from an optional object.
-fn parse_u64(parent: Option<&Value>, key: &str) -> Option<u64> {
-	parent.and_then(|value| value.get(key)).and_then(Value::as_u64)
+/// Read a `u64` token count from `usage.<name>`, falling back to the top-level `<name>`.
+fn parse_tokens(value: &Value, name: &str) -> u64 {
+	value
+		.x_get::<u64>(&format!("/usage/{name}"))
+		.or_else(|_| value.x_get::<u64>(name))
+		.unwrap_or(0)
 }
 
 // endregion: --- Support
@@ -90,10 +89,7 @@ mod tests {
 		// -- Check
 		assert_eq!(payload["model"], "jev1");
 		assert_eq!(payload["state"], "state");
-		let questions = payload
-			.get("questions")
-			.and_then(Value::as_object)
-			.ok_or("expected questions object")?;
+		let questions = payload.x_get_object("questions")?;
 		assert!(questions.contains_key("q0"));
 		assert!(questions.contains_key("intent"));
 
