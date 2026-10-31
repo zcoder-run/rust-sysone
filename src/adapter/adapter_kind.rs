@@ -11,6 +11,9 @@ pub enum AdapterKind {
 	/// TypeSafe System One (jev).
 	#[default]
 	Jev,
+
+	/// OpenAI decision API.
+	OpenAi,
 }
 
 // endregion: --- Types
@@ -21,6 +24,7 @@ impl AdapterKind {
 	pub fn as_str(self) -> &'static str {
 		match self {
 			AdapterKind::Jev => "jev",
+			AdapterKind::OpenAi => "openai",
 		}
 	}
 
@@ -28,6 +32,7 @@ impl AdapterKind {
 	pub fn default_endpoint(self) -> &'static str {
 		match self {
 			AdapterKind::Jev => "https://api.typesafe.ai/v1/systemone",
+			AdapterKind::OpenAi => "https://api.openai.com/v1/decisions",
 		}
 	}
 
@@ -35,6 +40,7 @@ impl AdapterKind {
 	pub fn default_model(self) -> &'static str {
 		match self {
 			AdapterKind::Jev => "jev-latest",
+			AdapterKind::OpenAi => "gpt-6-luna",
 		}
 	}
 
@@ -42,6 +48,7 @@ impl AdapterKind {
 	pub fn api_key_env_var(self) -> &'static str {
 		match self {
 			AdapterKind::Jev => "TYPESAFE_API_KEY",
+			AdapterKind::OpenAi => "OPENAI_API_KEY",
 		}
 	}
 }
@@ -58,6 +65,7 @@ impl FromStr for AdapterKind {
 	fn from_str(input: &str) -> Result<Self> {
 		match input.trim().to_lowercase().as_str() {
 			"jev" => Ok(AdapterKind::Jev),
+			"openai" => Ok(AdapterKind::OpenAi),
 			_ => Err(Error::UnknownAdapterKind(input.to_string())),
 		}
 	}
@@ -92,13 +100,28 @@ mod tests {
 	}
 
 	#[test]
+	fn test_adapter_kind_openai_values() {
+		// -- Exec
+		let kind = AdapterKind::OpenAi;
+
+		// -- Check
+		assert_eq!(kind.as_str(), "openai");
+		assert_eq!(kind.to_string(), "openai");
+		assert_eq!(kind.default_endpoint(), "https://api.openai.com/v1/decisions");
+		assert_eq!(kind.default_model(), "gpt-6-luna");
+		assert_eq!(kind.api_key_env_var(), "OPENAI_API_KEY");
+	}
+
+	#[test]
 	fn test_adapter_kind_from_str() -> Result<()> {
 		// -- Exec & Check
 		assert_eq!("jev".parse::<AdapterKind>()?, AdapterKind::Jev);
 		assert_eq!(" JEV ".parse::<AdapterKind>()?, AdapterKind::Jev);
+		assert_eq!("openai".parse::<AdapterKind>()?, AdapterKind::OpenAi);
+		assert_eq!(" OPENAI ".parse::<AdapterKind>()?, AdapterKind::OpenAi);
 
-		let unknown_err = "openai".parse::<AdapterKind>().err();
-		assert!(matches!(unknown_err, Some(Error::UnknownAdapterKind(name)) if name == "openai"));
+		let unknown_err = "anthropic".parse::<AdapterKind>().err();
+		assert!(matches!(unknown_err, Some(Error::UnknownAdapterKind(name)) if name == "anthropic"));
 
 		Ok(())
 	}

@@ -17,7 +17,7 @@ pub use answer::{Answer, ChoiceAnswer, NoulAnswer, ScoreAnswer};
 pub use client::*;
 pub use client_builder::*;
 pub use error::{Error, Result};
-pub use pricer::{PRICE_PER_MILLION_TOKENS, cost, price_per_million_tokens};
+pub use pricer::{PRICE_PER_MILLION_TOKENS, cost, openai_cost, price_per_million_tokens};
 pub use qkey::QKey;
 pub use question::{ChoiceQuestion, NoulQuestion, Question, ScoreQuestion};
 pub use request::*;

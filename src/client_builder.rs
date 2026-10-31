@@ -124,6 +124,28 @@ mod tests {
 
 		Ok(())
 	}
+
+	#[test]
+	fn test_client_builder_build_with_openai_adapter_kind() -> Result<()> {
+		// -- Exec
+		let client = Client::builder()
+			.with_adapter_kind(AdapterKind::OpenAi)
+			.build()?;
+		let overridden = Client::builder()
+			.with_adapter_kind(AdapterKind::OpenAi)
+			.with_endpoint("https://example.test/decisions")
+			.with_model("custom-decision-model")
+			.build()?;
+
+		// -- Check
+		assert_eq!(client.adapter_kind(), AdapterKind::OpenAi);
+		assert_eq!(client.endpoint(), AdapterKind::OpenAi.default_endpoint());
+		assert_eq!(client.model(), AdapterKind::OpenAi.default_model());
+		assert_eq!(overridden.endpoint(), "https://example.test/decisions");
+		assert_eq!(overridden.model(), "custom-decision-model");
+
+		Ok(())
+	}
 }
 
 // endregion: --- Tests
