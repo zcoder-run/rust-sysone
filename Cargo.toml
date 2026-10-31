@@ -1,6 +1,7 @@
 [package]
 name = "sysone"
-version = "0.0.4-WIP"
+version = "0.0.4"
+publish = false  # WIP, remove/comment before release
 edition = "2024"
 description = "System One TypeSafe AI Rust Client (unofficial)"
 readme = "README.md"
